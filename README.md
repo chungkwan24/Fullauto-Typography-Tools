@@ -133,7 +133,7 @@ I've finished editing. Check the contents page and the page numbering before I e
 
 MIT License
 
-Copyright (c) 2026 chungkwan24
+Copyright (c) 2026 Yijun Zhong
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
