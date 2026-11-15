@@ -28,7 +28,7 @@ Three defects and the kind of fix the skill makes for each:
 2. **Widow** – the last line of a paragraph alone at the top of the next page. Tightening an earlier paragraph saves one line, and the widow rejoins its paragraph.
 3. **Orphan** – the first line of a paragraph alone at the foot of a page. Saving a line higher up the page lifts the paragraph's second line up to join it, so two lines stand before the page turn.
 
-In every case the value is the smallest one that removes the defect, and it stays inside the comfort band that [`font_profile.py`](latin-book-typography/scripts/font_profile.py) measured for the font used here (Caladea: −5 comfort / −8 limit for tightening). The animation is a simulation: line breaks, justification and pagination are computed from the font's real glyph widths, not captured from InDesign. It was rendered from [`assets/demo/index.html`](assets/demo/index.html) with the [xilo-opus-video](https://github.com/Kianzzz/xilo-opus-video) skill ([MP4 version](assets/demo/demo.mp4)).
+
 
 ## 3. What it is for, and which software it supports
 
