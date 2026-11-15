@@ -14,7 +14,7 @@ def main():
     parser.add_argument('--python', type=Path, help='Absolute Python executable with requirements installed; default: this package .venv')
     parser.add_argument('--home', type=Path,
                         help='Absolute durable directory for runtime/ state and generated fragments; default: this package. '
-                             'Choose one outside the installed skill so reinstalling or updating the skill keeps the pairing.')
+                             'Choose one outside this checkout so moving or updating it keeps the pairing.')
     args = parser.parse_args()
     if args.mailbox and (not args.mailbox.is_absolute() or not args.mailbox.is_dir()):
         parser.error('--mailbox must be an existing absolute directory')
@@ -30,7 +30,7 @@ def main():
     if not token.exists():
         token.write_text(secrets.token_urlsafe(32))
     os.chmod(token, 0o600)
-    # The plugin loads config.js from its own folder; rerun setup after reinstalling the skill.
+    # The plugin loads config.js from its own folder; rerun setup after moving the checkout.
     config = root / 'plugin/config.js'
     config.write_text('globalThis.BOOK_MCP_CONFIG=' + json.dumps({'token': token.read_text().strip()}) + ';\n')
     os.chmod(config, 0o600)

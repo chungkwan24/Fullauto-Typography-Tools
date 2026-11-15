@@ -1,6 +1,6 @@
 # Backend: InDesign (INDD and IDML)
 
-Typography rules and modes come from SKILL.md; this file covers how to reach the document. Paths to `scripts/` are relative to the skill root.
+Typography rules and modes come from SKILL.md; this file covers how to reach the document. Paths to `scripts/` are relative to the skill root. The MCP server and the UXP development plugin are not in the skill: they are in the repository's `indesign-bridge/` folder and installed separately. When they are absent, the JSX route needs nothing beyond the skill.
 
 ## File types
 
@@ -17,8 +17,8 @@ Choose one route for the required operation; do not load or initialize every bri
 | A working InDesign MCP connection is available (`indesign_local` tools, e.g. `mcp__indesign_local__get_connection_status` in Claude Code) | Read [InDesign MCP connection](../indesign-mcp.md). Begin with `get_connection_status`, `list_documents`, then `inspect_document`; confirm the intended document before editing. Reuse the connection instead of starting another server. |
 | An authorized, localized tracking adjustment fits the MCP limits | Use `prepare_tracking_edit`, inspect the proposed target and values, then `apply_prepared_edit`. Inspect actual composition afterward. Use `restore_edit` only for a matching recorded transaction; it is not native Undo. Call `save_document` only when saving all current changes to that existing file is authorized. |
 | MCP is unavailable or does not support the required operation | Read [Running InDesign scripts on macOS](../indesign-macos.md). Prepare an immutable, document-guarded JSX job with `scripts/prepare_indesign_job.py`, starting with `scripts/inspect_document.jsx` for read-only identification and baseline evidence. Run it through AppleScript when permitted, or the Scripts-panel launcher when cross-application execution is restricted. Use an operation-specific JSX payload or the native UI for authorized edits. |
-| UXP development debugging, or a specifically authorized close/open operation | Read [Native InDesign UXP connection](../indesign-uxp.md). Use `scripts/uxp-bridge/` as a specialized fallback, not routine startup. Submit close and open separately, observe each result, and reacquire document objects. Never close/reopen merely to establish a connection or to discard unsaved changes. |
-| The user asks to establish or repair a local MCP connection | Follow the MCP reference and use `scripts/indesign-mcp/setup.py` for configuration preparation only. Do not run setup on every typography task or automatically migrate a working registration. |
+| UXP development debugging, or a specifically authorized close/open operation | Read [Native InDesign UXP connection](../indesign-uxp.md). Use `indesign-bridge/uxp-dev/` (repository, installed separately) as a specialized fallback, not routine startup. Submit close and open separately, observe each result, and reacquire document objects. Never close/reopen merely to establish a connection or to discard unsaved changes. |
+| The user asks to establish or repair a local MCP connection | Follow the MCP reference and use `indesign-bridge/mcp/setup.py` from the repository for configuration preparation only. Do not run setup on every typography task or automatically migrate a working registration. |
 | Nothing can run on the user's machine (e.g. a browser chat) | Prepare the JSX job or payload and ask the user to run it from InDesign's Scripts panel (Window → Utilities → Scripts), then send back the `result.json` or an exported PDF. |
 
 ## Rules on every route
