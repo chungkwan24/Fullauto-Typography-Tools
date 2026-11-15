@@ -1,0 +1,435 @@
+<!doctype html>
+<!--
+  README demo for latin-book-typography: runt, widow and orphan, each removed with in-budget tracking.
+  A render(t) page for the xilo-opus-video renderer (https://github.com/Kianzzz/xilo-opus-video):
+    python3 render.py assets/demo/index.html demo.mp4 --size 1200x676 --fps 30 --duration 15
+    ffmpeg -i demo.mp4 -vf "fps=20,split[a][b];[a]palettegen=max_colors=64:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle" -loop 0 demo.gif
+  Needs the Caladea, Inter and JetBrains Mono fonts installed locally.
+  Lines are composed here, not captured from InDesign: an optimal-fit paragraph composer with
+  hand-checked hyphenation points works from the font's real glyph widths, and a search picks
+  measures where each defect occurs and the smallest tracking value that removes it, kept inside
+  the font's rescue budget as measured by scripts/font_profile.py (Caladea body: tighten comfort -5 /
+  limit -8, loosen comfort +7 / limit +12, in 1/1000 em).
+-->
+<html><head><meta charset="utf-8">
+<style>
+  html,body{margin:0;background:#FAFAF7;overflow:hidden}
+  canvas{display:block}
+</style></head>
+<body><canvas id="c"></canvas>
+<script>
+window.ready = false;
+const W = 1200, H = 676;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const DPR = window.devicePixelRatio || 1;
+cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+ctx.scale(DPR, DPR);
+
+const C = { paper:'#FAFAF7', page:'#FFFFFF', ink:'#1F1E1C', soft:'#8A877F', faint:'#D9D6CE',
+            bad:'#D9480F', badTint:'rgba(217,72,15,0.10)', good:'#2F7D4A', track:'rgba(47,94,160,0.07)' };
+const SERIF = 'Caladea', SANS = 'Inter', MONO = '"JetBrains Mono"';
+const BUDGET = { tighten: -5, tightenLimit: -8, loosen: 7, loosenLimit: 12 };
+
+// ---------- helpers ----------
+const clamp = (x, a=0, b=1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = x => { x = clamp(x); return x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2; };
+function spring(x, w = 11, z = 0.9) {
+  if (x <= 0) return 0;
+  const wd = w * Math.sqrt(1 - z*z);
+  return 1 - Math.exp(-z*w*x) * (Math.cos(wd*x) + (z*w/wd) * Math.sin(wd*x));
+}
+const win = (t, a, b) => clamp((t - a) / (b - a));
+
+// ---------- composition engine ----------
+const widthCache = new Map();
+function wordW(word, px) {
+  const k = px + '|' + word;
+  if (!widthCache.has(k)) { ctx.font = `${px}px ${SERIF}`; ctx.letterSpacing = '0px'; widthCache.set(k, ctx.measureText(word).width); }
+  return widthCache.get(k);
+}
+// Hyphenation points (soft hyphens), hand-checked, honouring the skill's defaults: at least 3 letters
+// before and after the break, no hyphenation of capitalised words.
+const HYPH = { argument: 'argu-ment', carries: 'car-ries', chapter: 'chap-ter', columns: 'col-umns', composed: 'com-posed',
+  correction: 'cor-rec-tion', decisions: 'deci-sions', disappear: 'dis-ap-pear', dramatic: 'dra-matic', earlier: 'ear-lier',
+  following: 'fol-low-ing', follows: 'fol-lows', forward: 'for-ward', fragment: 'frag-ment', freedom: 'free-dom',
+  harmless: 'harm-less', immediately: 'imme-di-ately', inherits: 'inher-its', invisible: 'invis-ible', leading: 'lead-ing',
+  letters: 'let-ters', machinery: 'machin-ery', margins: 'mar-gins', measure: 'mea-sure', negotiation: 'nego-ti-a-tion',
+  opening: 'open-ing', openings: 'open-ings', paragraph: 'para-graph', previous: 'previ-ous', provided: 'pro-vided',
+  remaining: 'remain-ing', spacing: 'spac-ing', themselves: 'them-selves', thousandths: 'thou-sandths', travels: 'trav-els',
+  typography: 'typog-ra-phy', specifications: 'spec-i-fi-ca-tions', adjustment: 'adjust-ment',
+  paragraphs: 'para-graphs' };
+function fragments(text) {
+  const out = [];
+  text.split(' ').forEach((w, wi) => {
+    const m = w.match(/^([a-z]+)(.*)$/), h = m && HYPH[m[1]];
+    const parts = h ? h.split('-') : [w];
+    if (h) parts[parts.length - 1] += m[2];
+    parts.forEach((t, k) => out.push({ t, word: wi, end: k === parts.length - 1 }));
+  });
+  return out;
+}
+// Optimal-fit breaking over the whole paragraph (a small Knuth–Plass-style composer, like InDesign's
+// Paragraph Composer): word spaces may shrink to 80% or stretch, badness grows with the cube of the
+// deviation, hyphenated breaks cost extra. Tracking in 1/1000 em applies to every character incl. spaces.
+function breakPara(text, measure, px, trk, indent) {
+  const fr = fragments(text), n = fr.length, ls = trk / 1000 * px, sp = wordW(' ', px) + ls, hy = wordW('-', px) + ls;
+  const ww = fr.map(f => wordW(f.t, px) + ls * f.t.length);
+  const pre = [0], ends = [0]; ww.forEach((w, i) => { pre.push(pre[i] + w); ends.push(ends[i] + (fr[i].end ? 1 : 0)); });
+  // boundaries j are candidate breaks after fragment j-1
+  const best = new Array(n + 1).fill(Infinity), from = new Array(n + 1).fill(-1), hyAt = new Array(n + 1).fill(false); best[0] = 0;
+  const spaces = (i, j) => ends[j - 1] - ends[i];           // word ends inside the line, before its last fragment
+  for (let i = 0; i < n; i++) {
+    if (best[i] === Infinity) continue;
+    const avail = measure - (i === 0 ? indent : 0);
+    for (let j = i + 1; j <= n; j++) {
+      const hyph = !fr[j - 1].end, gaps = spaces(i, j);
+      const sum = pre[j] - pre[i] + (hyph ? hy : 0);
+      if (sum + gaps * sp * 0.8 > avail) break;
+      let cost;
+      if (j === n) cost = sum + gaps * sp <= avail ? 0 : Infinity;
+      else if (gaps === 0) cost = 1e12;
+      else {
+        const r = (avail - sum) / gaps / sp;
+        cost = Math.pow(10 + 100 * Math.pow(Math.abs(r - 1), 3), 2) + (hyph ? 3000 : 0) + (hyph && hyAt[i] ? 1e6 : 0);
+      }
+      if (best[i] + cost < best[j]) { best[j] = best[i] + cost; from[j] = i; hyAt[j] = hyph; }
+    }
+  }
+  const cuts = []; for (let j = n; j > 0; j = from[j]) cuts.unshift([from[j], j]);
+  const lines = cuts.map(([i, j], k) => {
+    const idx = []; for (let q = i; q < j; q++) idx.push(q);
+    const hyph = !fr[j - 1].end;
+    return { idx, hyph, gaps: spaces(i, j), words: spaces(i, j) + 1, nat: pre[j] - pre[i] + (hyph ? hy : 0),
+             w: pre[j] - pre[i] + spaces(i, j) * sp + (hyph ? hy : 0), last: k === cuts.length - 1 };
+  });
+  return { fr, ww, sp, ls, lines };
+}
+// Lays paragraphs into pages; returns positioned fragments keyed by "p:i".
+function compose(paras, trks, g) {
+  const out = {}, lineInfo = []; let line = 0;
+  paras.forEach((text, p) => {
+    const indent = p === 0 && !g.indentFirst ? 0 : g.indent;
+    const b = breakPara(text, g.measure, g.px, trks[p], indent);
+    b.lines.forEach((L, li) => {
+      const page = Math.floor(line / g.lpp), row = line % g.lpp, np = g.pageX.length;
+      // lines past the last visible page continue below it (clipped), so they can slide in
+      const x0 = g.pageX[Math.min(page, np - 1)], y = g.top + (page < np ? row : row + (page - np + 1) * g.lpp) * g.lead;
+      const ind = li === 0 ? indent : 0;
+      const gap = (!L.last && L.gaps > 0) ? (g.measure - ind - (L.nat)) / L.gaps : b.sp;
+      let x = x0 + ind;
+      L.idx.forEach((i, q) => {
+        const f = b.fr[i], isLast = q === L.idx.length - 1;
+        out[p + ':' + i] = { x, y, page, word: f.t + (isLast && L.hyph ? '-' : ''), ls: b.ls, p, w: f.word };
+        x += b.ww[i] + (f.end && !isLast ? gap : 0);
+      });
+      lineInfo.push({ p, li, page, row, n: L.words, gap, sp: b.sp, last: !!L.last, first: li === 0, hyph: L.hyph,
+                      count: b.lines.length, x0: x0 + ind, y, w: L.last ? L.w : g.measure - ind });
+      line++;
+    });
+  });
+  return { words: out, lines: lineInfo };
+}
+const spreadOK = (lay, max = 1.7) => lay.lines.every(l => l.last || l.n < 2 || (l.gap <= l.sp * max && l.gap >= l.sp * 0.8));
+
+// ---------- scene data (search geometry where the defect exists and a small in-budget fix removes it) ----------
+const TXT = {
+  runt: 'Good typography is mostly invisible. The reader should meet the argument, not the machinery that carries it. Behind every page sit decisions about measure, leading and the spacing of words and letters, and each of them is meant to disappear. When they work, the text block reads as an even grey, the lines end where the eye expects them to end, and no lonely word on the last line.',
+  w0: 'Away from chapter openings, most pages in a book are simply full. The text block is filled from top to bottom, and every line has to earn its place inside the approved measure and leading.',
+  w1: 'A page is composed line by line, but it is read as a whole. When one paragraph runs a little long, every line after it moves, and a break that was harmless an hour ago can now leave a fragment stranded on the next page.',
+  w2: 'The cure is rarely dramatic. Tightening an earlier paragraph by a few thousandths of an em is often enough to pull one line back, provided the spacing stays even.',
+  w3: 'Then the page is checked again from the changed paragraph to the end of the spread, because a single correction can move every break that follows it in the story.',
+  o0: 'Every page inherits decisions made earlier in the story. A line saved or lost on one page travels forward through the rest of the chapter.',
+  tw: 'The same discipline applies to every later page. Spacing fixes are made last, after the wording, headings, frames and page count are settled, because each of those changes reflows the lines that a fix was tuned for.',
+  to: 'A fix that moves a page break is checked to the end of the spread. If no trial inside the budget works, the case is reported instead of forced.',
+  o3: 'None of this changes a word of the text. The approved specifications stay locked, every adjustment is logged with its page, range and value, and the composed pages decide whether a fix is kept.',
+  o1: 'Pagination is a negotiation between the text and the frame. The approved size, leading and margins are fixed, so the remaining freedom lives in the spacing of the lines themselves and in how each paragraph is allowed to break across pages and columns.',
+  o2: 'A first line left alone at the foot of a page is an orphan: the reader begins a sentence and must immediately turn the page to finish it. Saving one line earlier on the page lifts a second line up to join it, and the break then leaves two lines on each side.',
+};
+
+const maxGap = lay => Math.max(...lay.lines.filter(l => !l.last && l.n > 1).map(l => l.gap / l.sp));
+function findRunt() {
+  let best = null;
+  for (const px of [21, 22]) for (let m = 760; m <= 860; m++) {
+    const g = { measure: m, px, lead: Math.round(px * 1.5), lpp: 99, top: 0, pageX: [0], indent: 0 };
+    const a = compose([TXT.runt], [0], g);
+    if (a.lines[a.lines.length - 1].n !== 1 || a.lines.length < 4 || a.lines.length > 6) continue;
+    for (let k = -1; k >= BUDGET.tighten; k--) {
+      const b = compose([TXT.runt], [k], g);
+      if (b.lines.length < a.lines.length) {
+        const ok = b.lines[b.lines.length - 1].n >= 3 && spreadOK(b) && spreadOK(a) && k <= -2;
+        const score = Math.abs(k + 4) + maxGap(b) + Math.abs(px - 22);
+        if (ok && (!best || score < best.score)) best = { m, k, px, lines: a.lines.length, score };
+        break;
+      }
+    }
+  }
+  return best;
+}
+// Two-page scenes: the search picks the defect paragraph d, the lines per page, and the earlier paragraph t
+// whose in-budget tracking moves the break (widow: t loses a line; orphan: t gains one).
+const cnt = (lay, p) => lay.lines.filter(l => l.p === p).length;
+const lastN = (lay, p) => lay.lines.filter(l => l.p === p).slice(-1)[0].n;
+// lines of paragraph p on each page; a split is acceptable when neither side holds exactly one line
+const sides = (lay, p) => [0, 1].map(pg => lay.lines.filter(l => l.p === p && l.page === pg).length);
+const splitOK = (lay, p) => sides(lay, p).every(c => c === 0 || c >= 2);
+function findPages(paras, kind) {
+  let best = null;
+  for (const px of [15, 15.5, 16]) for (let m = 300; m <= 410; m++) {
+    const g = { measure: m, px, lead: Math.round(px * 1.48), lpp: 99, top: 0, pageX: [0, 0], indent: Math.round(px * 1.5) };
+    const z = paras.map(() => 0), a0 = compose(paras, z, g);
+    if (!spreadOK(a0, 2.0)) continue;
+    const n = paras.map((_, i) => cnt(a0, i)), before = i => n.slice(0, i).reduce((x, y) => x + y, 0);
+    for (let d = 1; d < paras.length; d++) {
+      if (n[d] < 3 || lastN(a0, d) < 2) continue;
+      const lpp = kind === 'widow' ? before(d) + n[d] - 1 : before(d) + 1;
+      if (lpp < 9 || lpp > 14) continue;
+      const g2 = Object.assign({}, g, { lpp });
+      for (let t = 0; t < d; t++) for (const dir of [-1, 1]) {
+        const kmax = dir < 0 ? -BUDGET.tighten : BUDGET.loosen;
+        for (let j = 1; j <= kmax; j++) {
+          const k = dir * j, tr = z.slice(); tr[t] = k;
+          const b = compose(paras, tr, g2);
+          if (cnt(b, t) === n[t]) continue;
+          const ok = cnt(b, t) === n[t] + dir && lastN(b, t) >= 2 && spreadOK(b, 2.0) && j >= 2 &&
+                     paras.every((_, i) => i === t || cnt(b, i) === n[i]) && paras.every((_, i) => splitOK(b, i)) &&
+                     paras.every((_, i) => lastN(b, i) >= 2 && (i === t || lastN(a0, i) >= 2));
+          const score = Math.abs(j - 4) + 2 * maxGap(b) + Math.abs(px - 16) + Math.abs(lpp - 12) * 0.3 + (dir < 0 ? 0 : 0.5);
+          if (ok && (!best || score < best.score)) best = { m, k, px, lpp, t, d, score };
+          break;
+        }
+      }
+    }
+  }
+  return best;
+}
+
+let S = null;
+const TOP = 96, BOT = 530;   // content band; readouts and caption sit below it
+function setup() {
+  const WP = [TXT.w0, TXT.w1, TXT.w2, TXT.w3], OP = [TXT.o0, TXT.o1, TXT.o3, TXT.o2];
+  const r = findRunt(), w = findPages(WP, 'widow'), o = findPages(OP, 'orphan');
+  if (!r || !w || !o) throw new Error('no geometry found: ' + JSON.stringify({ r, w, o }));
+  const pageW = 470, gap = 28;
+  const spreadX = (W - (2 * pageW + gap)) / 2;
+  const mk = (sol) => {
+    const padX = (pageW - sol.m) / 2, pageH = 50 + sol.lpp * Math.round(sol.px * 1.48) + 52, pageY = TOP + (BOT - TOP - pageH) / 2;
+    return { measure: sol.m, px: sol.px, lead: Math.round(sol.px * 1.48), lpp: sol.lpp, top: pageY + 50 + 15, indent: Math.round(sol.px * 1.5),
+             pageX: [spreadX + padX, spreadX + pageW + gap + padX], pageW, pageH, pageY, spreadX, gap, indentFirst: false };
+  };
+  const rg = { measure: r.m, px: r.px, lead: Math.round(r.px * 1.5), lpp: 99, top: 0, pageX: [(W - r.m) / 2], indent: 0 };
+  rg.top = TOP + (BOT - TOP - r.lines * rg.lead) / 2 + r.px;
+  const tr = (n, k) => { const a = new Array(n).fill(0); a[1] = k; return a; };
+  S = {
+    runt: { g: rg, sol: r, paras: [TXT.runt], A: [0], B: [r.k], ti: 0, di: 0 },
+    widow: { g: mk(w), sol: w, paras: WP, A: WP.map(() => 0), B: WP.map((_, i) => i === w.t ? w.k : 0), ti: w.t, di: w.d },
+    orphan: { g: mk(o), sol: o, paras: OP, A: OP.map(() => 0), B: OP.map((_, i) => i === o.t ? o.k : 0), ti: o.t, di: o.d },
+  };
+  // follow-on text for page 2, added after the search (it cannot move the lines above it)
+  S.widow.paras.push(TXT.tw); S.widow.A.push(0); S.widow.B.push(0);
+  S.orphan.paras.push(TXT.to); S.orphan.A.push(0); S.orphan.B.push(0);
+  for (const s of Object.values(S)) { s.la = compose(s.paras, s.A, s.g); s.lb = compose(s.paras, s.B, s.g); }
+  window.__solutions = { runt: r, widow: w, orphan: o };
+}
+
+// ---------- drawing ----------
+function text(str, x, y, font, color, align = 'left', ls = 0) {
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.letterSpacing = ls + 'px'; ctx.fillText(str, x, y); ctx.letterSpacing = '0px';
+}
+function drawWords(s, p, alpha, mark) {
+  const { la, lb } = s, q = clamp(p);
+  const put = (str, x, y, ls, col, a) => {
+    if (a <= 0.003) return;
+    ctx.globalAlpha = a; ctx.font = `${s.g.px}px ${SERIF}`; ctx.letterSpacing = ls + 'px';
+    ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(str, x, y);
+  };
+  for (const key in la.words) {
+    const A = la.words[key], B = lb.words[key], ls = lerp(A.ls, B.ls, q), col = mark(key) || C.ink;
+    if (A.page === B.page && (Math.abs(A.x - B.x) < 24 || A.y === B.y)) put(q < 0.5 ? A.word : B.word, lerp(A.x, B.x, p), lerp(A.y, B.y, p), ls, col, alpha);
+    else {
+      // a word that changes page, or jumps to another line, fades out where it was and fades in where it lands
+      const off = s.g.lead * 0.6;
+      put(A.word, A.x, A.y - off * ease(q), ls, col, alpha * (1 - ease(clamp(q * 2.5))));
+      put(B.word, B.x, B.y + off * (1 - ease(q)), ls, col, alpha * ease(clamp((q - 0.86) / 0.12)));
+    }
+  }
+  ctx.letterSpacing = '0px'; ctx.globalAlpha = 1;
+}
+function drawPages(g, alpha, folios) {
+  ctx.globalAlpha = alpha;
+  for (let i = 0; i < 2; i++) {
+    const x = g.spreadX + i * (g.pageW + g.gap);
+    ctx.fillStyle = 'rgba(0,0,0,0.035)'; ctx.fillRect(x + 3, g.pageY + 4, g.pageW, g.pageH);
+    ctx.fillStyle = C.page; ctx.fillRect(x, g.pageY, g.pageW, g.pageH);
+    ctx.strokeStyle = C.faint; ctx.lineWidth = 1; ctx.strokeRect(x + .5, g.pageY + .5, g.pageW - 1, g.pageH - 1);
+    text(folios[i], x + g.pageW / 2, g.pageY + g.pageH - 26, `12px ${SANS}`, C.soft, 'center');
+  }
+  ctx.globalAlpha = 1;
+}
+// a thin bracket under a line range
+function underline(x, y, w, color, alpha) {
+  ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke(); ctx.globalAlpha = 1;
+}
+function check(x, y, color, p) {
+  ctx.strokeStyle = color; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const pts = [[0, 6], [5, 11], [14, 0]];
+  ctx.beginPath(); ctx.moveTo(x + pts[0][0], y + pts[0][1]);
+  const L1 = 7.1, L2 = 14.2, tot = L1 + L2, d = p * tot;
+  if (d <= L1) { const q = d / L1; ctx.lineTo(x + lerp(0, 5, q), y + lerp(6, 11, q)); }
+  else { ctx.lineTo(x + 5, y + 11); const q = (d - L1) / L2; ctx.lineTo(x + lerp(5, 14, q), y + lerp(11, 0, q)); }
+  ctx.stroke(); ctx.lineCap = 'butt';
+}
+
+// readout strip under the content: label above value
+function panel(y, items, alpha) {
+  ctx.globalAlpha = alpha;
+  const x0 = 56, colW = (W - 2 * x0) / items.length;
+  ctx.fillStyle = C.faint; ctx.fillRect(x0, y - 30, W - 2 * x0, 1);
+  items.forEach((r, i) => {
+    const x = x0 + i * colW;
+    text(r[0], x, y, `12px ${MONO}`, C.soft);
+    text(r[1], x, y + 24, `500 15px ${MONO}`, r[2] || C.ink);
+  });
+  ctx.globalAlpha = 1;
+  return colW;
+}
+
+const SCENE = 5.0, NAMES = ['Runt', 'Widow', 'Orphan'];
+function header(idx, alpha) {
+  text('latin-book-typography', 56, 54, `500 15px ${SANS}`, C.ink);
+  text('Claude skill', 56 + 172, 54, `15px ${SANS}`, C.soft);
+  let x = W - 56;
+  for (let i = NAMES.length - 1; i >= 0; i--) {
+    const label = `${String(i + 1).padStart(2, '0')}  ${NAMES[i]}`;
+    ctx.font = `14px ${SANS}`; const w = ctx.measureText(label).width;
+    x -= w;
+    text(label, x, 54, `${i === idx ? 500 : 400} 14px ${SANS}`, i === idx ? C.ink : C.soft);
+    if (i === idx) { ctx.globalAlpha = alpha; ctx.fillStyle = C.ink; ctx.fillRect(x, 64, w, 2); ctx.globalAlpha = 1; }
+    x -= 28;
+  }
+}
+function caption(lines, alpha, color) {
+  ctx.globalAlpha = alpha;
+  text(lines, 56, H - 34, `16px ${SANS}`, color || C.ink);
+  ctx.globalAlpha = 1;
+}
+
+// shared per-scene timeline (local seconds)
+const T = { in: 0.0, mark: 0.7, track0: 1.6, track1: 2.5, flow: 2.5, done: 3.2, out: 4.6 };
+
+function scene(kind, lt, idx) {
+  const s = S[kind], k = s.B[s.ti];
+  const alphaIn = ease(win(lt, T.in, T.in + 0.45)), alphaOut = 1 - ease(win(lt, T.out, SCENE));
+  const alpha = alphaIn * alphaOut;
+  const markP = ease(win(lt, T.mark, T.mark + 0.35));
+  const trackP = ease(win(lt, T.track0, T.track1));
+  const flowP = spring(lt - T.flow);
+  const doneP = ease(win(lt, T.done, T.done + 0.35));
+  const trk = Math.round(lerp(0, k, trackP));
+  const sign = v => v > 0 ? '+' + v : v < 0 ? '−' + Math.abs(v) : '0';
+  header(idx, alpha);
+
+  // which words are "the defect"
+  let defectKeys = new Set(), tracked = 0;
+  const la = s.la;
+  if (kind === 'runt') {
+    const last = la.lines[la.lines.length - 1];
+    defectKeys = new Set(Object.keys(la.words).filter(key => la.words[key].y === last.y));
+  } else if (kind === 'widow') {
+    const L = la.lines.find(l => l.p === s.di && l.last);
+    defectKeys = new Set(Object.keys(la.words).filter(key => la.words[key].p === s.di && la.words[key].y === L.y && la.words[key].page === L.page));
+  } else {
+    const L = la.lines.find(l => l.p === s.di && l.first);
+    defectKeys = new Set(Object.keys(la.words).filter(key => la.words[key].p === s.di && la.words[key].page === L.page && la.words[key].y === L.y));
+  }
+  const defectCol = () => {
+    const bad = markP * (1 - doneP);
+    if (bad <= 0.01) return null;
+    return mix(C.ink, C.bad, bad);
+  };
+
+  if (kind !== 'runt') drawPages(s.g, alpha, kind === 'widow' ? ['24', '25'] : ['58', '59']);
+
+  // tracked range tint (the paragraph that receives the tracking)
+  const tintA = alpha * ease(win(lt, T.track0 - 0.2, T.track0 + 0.1)) * (1 - ease(win(lt, T.done + 0.4, T.done + 1.0)));
+  if (tintA > 0) {
+    const src = lt < T.flow ? s.la : s.lb;
+    const lines = src.lines.filter(l => l.p === s.ti);
+    ctx.globalAlpha = tintA; ctx.fillStyle = C.track;
+    lines.forEach(l => ctx.fillRect(l.x0 - 6, l.y - s.g.px * 0.95, (l.last ? l.w : l.w) + 12, s.g.lead));
+    ctx.globalAlpha = 1;
+  }
+
+  // defect highlight band
+  const bandA = alpha * markP * (1 - doneP);
+  if (bandA > 0) {
+    const keys = [...defectKeys]; const ws = keys.map(key => s.la.words[key]);
+    const x0 = Math.min(...ws.map(w => w.x)); const y = ws[0].y;
+    ctx.font = `${s.g.px}px ${SERIF}`;
+    const x1 = Math.max(...ws.map(w => w.x + ctx.measureText(w.word).width));
+    const p = 1 - clamp(flowP);
+    ctx.globalAlpha = bandA * p; ctx.fillStyle = C.badTint;
+    ctx.fillRect(x0 - 6, y - s.g.px * 0.95, x1 - x0 + 12, s.g.lead);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.save();
+  if (kind !== 'runt') {
+    const g = s.g; ctx.beginPath();
+    for (let i = 0; i < 2; i++) ctx.rect(g.spreadX + i * (g.pageW + g.gap), g.pageY, g.pageW, g.top + (g.lpp - 1) * g.lead + g.px * 0.4 - g.pageY);
+    ctx.clip();
+  }
+  drawWords(s, clamp(flowP, 0, 1.08), alpha, key => defectKeys.has(key) ? defectCol() : null);
+  ctx.restore();
+
+  // readouts
+  const dir = k < 0 ? 'tighten' : 'loosen';
+  const comfort = k < 0 ? BUDGET.tighten : BUDGET.loosen, limit = k < 0 ? BUDGET.tightenLimit : BUDGET.loosenLimit;
+  const state = doneP > 0.5 ? ['fixed', C.good] : markP > 0.5 ? ['detected', C.bad] : ['scanning', C.soft];
+  const PY = 572;
+  const colW = panel(PY, [
+    ['defect', NAMES[idx].toLowerCase()],
+    ['status', state[0], state[1]],
+    ['font profile', 'Caladea · serif'],
+    [`budget (${dir})`, `${sign(comfort)} comfort / ${sign(limit)} limit`],
+    ['tracking', `${sign(trk)} /1000 em`, doneP > 0.5 ? C.good : C.ink],
+  ], alpha);
+  if (doneP > 0) {
+    ctx.font = `500 15px ${MONO}`; const sw = ctx.measureText('fixed').width;
+    ctx.globalAlpha = alpha; check(56 + colW + sw + 10, PY + 12, C.good, doneP); ctx.globalAlpha = 1;
+  }
+
+  // captions
+  const CAP = {
+    runt:   ['Runt: one word stranded on the last line of a paragraph.',
+             `Fixed: ${sign(k)}/1000 em tracking on the paragraph pulls the word up, inside the font’s comfort band.`],
+    widow:  ['Widow: a paragraph’s last line alone at the top of the next page.',
+             `Fixed: ${sign(k)}/1000 em on an earlier paragraph saves a line; the widow rejoins its paragraph.`],
+    orphan: ['Orphan: a paragraph’s first line alone at the foot of a page.',
+             `Fixed: ${sign(k)}/1000 em on an earlier paragraph saves a line; two lines now stand before the turn.`],
+  }[kind];
+  const c1 = alpha * markP * (1 - ease(win(lt, T.done - 0.25, T.done)));
+  const c2 = alpha * doneP;
+  if (c1 > 0) caption(CAP[0], c1, C.ink);
+  if (c2 > 0) caption(CAP[1], c2, C.ink);
+}
+
+function mix(a, b, p) {
+  const h = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16));
+  const A = h(a), B = h(b);
+  return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], p))).join(',')})`;
+}
+
+window.render = function (t) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+  const total = SCENE * 3, tt = ((t % total) + total) % total;
+  const idx = Math.min(2, Math.floor(tt / SCENE)), lt = tt - idx * SCENE;
+  scene(['runt', 'widow', 'orphan'][idx], lt, idx);
+};
+
+document.fonts.load(`25px ${SERIF}`).then(() => Promise.all([
+  document.fonts.load(`15px ${SANS}`), document.fonts.load(`500 15px ${SANS}`), document.fonts.load(`15px ${MONO}`)
+])).then(() => document.fonts.ready).then(() => { setup(); window.render(0); window.ready = true; });
+</script></body></html>
