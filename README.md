@@ -28,7 +28,7 @@ Three defects and the kind of fix the skill makes for each:
 2. **Widow** – the last line of a paragraph alone at the top of the next page. Tightening an earlier paragraph saves one line, and the widow rejoins its paragraph.
 3. **Orphan** – the first line of a paragraph alone at the foot of a page. Saving a line higher up the page lifts the paragraph's second line up to join it, so two lines stand before the page turn.
 
-In every case the value is the smallest one that removes the defect, and it stays inside the comfort band that [`font_profile.py`](latin-book-typography/scripts/font_profile.py) measured for the font used here (Caladea: −5 comfort / −8 limit for tightening). The animation is a simulation: line breaks, justification and pagination are computed from the font's real glyph widths, not captured from InDesign. It was rendered from [`assets/demo/index.html`](assets/demo/index.html) with the [xilo-opus-video](https://github.com/Kianzzz/xilo-opus-video) skill ([MP4 version](assets/demo/demo.mp4)).
+
 
 ## 3. What it is for, and which software it supports
 
@@ -131,4 +131,24 @@ I've finished editing. Check the contents page and the page numbering before I e
 
 ## License
 
-[MIT](LICENSE). The demo font Caladea is not included in this repository.
+MIT License
+
+Copyright (c) 2026 chungkwan24
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
