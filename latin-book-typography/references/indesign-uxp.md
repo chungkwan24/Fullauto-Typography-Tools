@@ -1,11 +1,11 @@
 # Native InDesign UXP connection
 
-Read this for UXP automation instead of ExtendScript. The helpers in `scripts/uxp-bridge/` contain connection and inspection mechanics only. Editing permissions and typography rules come from SKILL.md and the current user request. Loading a helper does not authorize manuscript changes, saving, closing, font replacement, or exports.
+Read this for UXP automation instead of ExtendScript. The helpers in the repository's `indesign-bridge/uxp-dev/` folder (installed separately from this skill) contain connection and inspection mechanics only. Editing permissions and typography rules come from SKILL.md and the current user request. Loading a helper does not authorize manuscript changes, saving, closing, font replacement, or exports.
 
 ## Development connection
 
 1. Start InDesign and open the intended working document. Use Adobe's official UXP Developer Tool (UDT).
-2. Add `scripts/uxp-bridge/manifest.json` in UDT and load **Latin Book UXP Bridge**. Keep earlier experimental plugins unloaded.
+2. Add `indesign-bridge/uxp-dev/manifest.json` in UDT and load **Latin Book UXP Bridge**. Keep earlier experimental plugins unloaded.
 3. Open **Debug → Console**. The bridge exposes `bookUXP`. Acquire the host app at operation time with `require('indesign').app`; capturing app during initial plugin evaluation returned undefined on the tested host.
 4. Run `console.log(JSON.stringify(bookUXP.inspect(), null, 2))`. Confirm the actual document name, ID, saved/modified state, page count, and fonts before any operation. Do not identify a file by name alone when multiple copies could be open; confirm its native window URL or trusted project path too.
 

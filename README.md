@@ -97,7 +97,7 @@ To install it for one project only, copy the folder into that project's `.claude
 | JSX jobs | macOS with AppleScript, or any system where you can run a script from InDesign's Scripts panel. | Read-only inspection and one-off edits without setting up MCP. |
 | Manual | Nothing extra. The agent prepares the script, you run it from the Scripts panel and send back the result. | Browser chats and locked-down machines. |
 
-The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
+The MCP server and its InDesign plugin are not inside the skill folder. They live in [`indesign-bridge/`](indesign-bridge/README.md) at the top of this repository, so several skills can share one connection. Keep a clone of the repository for them; copying only the skill folder is enough for the JSX and manual routes. The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
 
 ## 5. How to use it
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 ROOT=Path(__file__).resolve().parent
-# setup.py --home stores pairing outside the installed skill; the client config passes it here.
+# setup.py --home stores pairing outside this checkout; the client config passes it here.
 RUNTIME=Path(os.environ.get('INDESIGN_MCP_HOME') or ROOT)/'runtime'
 mcp=FastMCP('InDesign Local Bridge')
 

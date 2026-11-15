@@ -1,6 +1,6 @@
 # InDesign MCP connection through native UXP
 
-Read this when an agent needs named MCP tools rather than repeated debugger submissions. The implementation is in `scripts/indesign-mcp/`. Typography decisions and editing authority remain in SKILL.md and the current request; connecting or installing does not authorize manuscript changes.
+Read this when an agent needs named MCP tools rather than repeated debugger submissions. The implementation is not part of this skill: it lives in the `indesign-bridge/mcp/` folder of the typography-skills repository and is installed once, separately, because it is shared infrastructure with its own pairing and virtual environment. If only the skill is installed and no `indesign_local` tools are available, use the JSX route in [indesign-macos.md](indesign-macos.md) instead. Typography decisions and editing authority remain in SKILL.md and the current request; connecting or installing does not authorize manuscript changes.
 
 ## Connection model
 
@@ -21,13 +21,13 @@ The plugin polls approximately once per second. There is no HTTP listener, netwo
 
 If `indesign_local` tools are already available, start with `get_connection_status`, then `list_documents`. In Claude Code they appear as `mcp__indesign_local__get_connection_status`, `mcp__indesign_local__list_documents`, and so on; other clients may prefix them differently. Do not launch another server or load a second pairing. Match the actual target ID and name before inspection. Page arguments use physical page order: cover=1, regardless of printed folios.
 
-The packaged copy is for reuse. Adding it to this skill does not move an existing server registration or replace a loaded plugin. Another copy of this server (for example, an older project-based install) may already be registered; do not run two copies against the same plugin mailbox simultaneously.
+The repository copy is for reuse. Installing or updating this skill does not move an existing server registration or replace a loaded plugin. Another copy of this server (for example, an older project-based install) may already be registered; do not run two copies against the same plugin mailbox simultaneously.
 
 ## Establish a new local pairing
 
 Tested server platform: macOS/POSIX, Python 3.10+. The plugin was qualified on InDesign 2026 21.2.0.30. Windows is not validated; the current server imports `fcntl` and therefore needs adaptation before Windows use. The manifest minimum is not a claim of validation on every supported host version.
 
-In the `scripts/indesign-mcp/` directory:
+In the `indesign-bridge/mcp/` directory of the repository checkout:
 
 ```sh
 python3 -m venv .venv
@@ -35,7 +35,7 @@ python3 -m venv .venv
 python3 setup.py --home "$HOME/Library/Application Support/latin-book-indesign-mcp"
 ```
 
-`--home` keeps the token, mailbox path, lock and generated fragments outside the installed skill, so reinstalling or updating the skill does not lose the pairing; the fragments pass it to the server as `INDESIGN_MCP_HOME`. Without `--home`, state lives in this package's `runtime/` (the older behavior). Use the same `--home` on every later setup run. After reinstalling the skill, rerun setup with that `--home` (it reuses the token and rewrites `plugin/config.js`) and reload the plugin from the new path.
+`--home` keeps the token, mailbox path, lock and generated fragments outside the installed skill, so moving or updating the checkout does not lose the pairing; the fragments pass it to the server as `INDESIGN_MCP_HOME`. Without `--home`, state lives in this package's `runtime/` (the older behavior). Use the same `--home` on every later setup run. After moving the checkout, rerun setup with that `--home` (it reuses the token and rewrites `plugin/config.js`) and reload the plugin from the new path.
 
 In Adobe UXP Developer Tools, add `plugin/manifest.json` and Load it into the intended InDesign instance. The plugin ID is `latin-book-local-mcp-v2`. If migrating from an older copy with that ID, first unload the old copy and update the UDT source path; do not leave two source registrations/pairings competing.
 
@@ -53,7 +53,7 @@ python3 setup.py --home "$HOME/Library/Application Support/latin-book-indesign-m
   --mailbox '/absolute/private/plugin/data/directory'
 ```
 
-The initial token is reused on subsequent setup runs. The plugin must have loaded the generated `plugin/config.js`; if configuration changed after Load, reload the plugin. Do not expose the token in chat, logs or source control. `runtime/`, `plugin/config.js`, `.venv/`, generated fragments and caches are excluded by the included `.gitignore`; these are not shipped with the skill.
+The initial token is reused on subsequent setup runs. The plugin must have loaded the generated `plugin/config.js`; if configuration changed after Load, reload the plugin. Do not expose the token in chat, logs or source control. `runtime/`, `plugin/config.js`, `.venv/`, generated fragments and caches are excluded by the included `.gitignore`; these are never committed.
 
 `setup.py` writes two fragments with absolute paths to this package's `.venv/bin/python` and `server.py` (`--python /absolute/python` selects an existing interpreter with the requirements installed), and prints a `claude mcp add` command without running it. Review the fragment and register only the intended server entry under the current task's authorization. If `indesign_local` already exists, deliberately choose which package to use rather than adding a duplicate. Do not overwrite unrelated configuration.
 
