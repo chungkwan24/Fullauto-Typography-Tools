@@ -35,4 +35,5 @@ The route's reference has the limits and recovery details.
 
 - Page sides: in facing documents the physical order is `documentOffset + 1`, the label is `page.name`, the side is `page.side`. Never substitute one for another.
 - Recto starts: Keep Options → **Start Paragraph: On Next Odd Page** on the chapter-opening style lets the story reflow on later edits; confirm the resulting side once, since section numbering decides which pages are odd.
+- Font profile and rescue pass: `Font.location` gives the font file for `scripts/font_profile.py`; the read-only payload `scripts/inspect_spacing.jsx` returns the fonts, the runt candidates and their composed lines for `scripts/spacing_rescue.py` (live-tested on InDesign 21.2 through the AppleScript route). The MCP editor can apply and restore the planned tracking ranges but cannot set a kerning mode or a no-break attribute; use a JSX payload or the native UI for those. See [kerning.md](../kerning.md).
 - Widow/orphan control: Keep Options → Keep Lines Together (at start/end of paragraph) and Keep with Next for headings; still check the composed pages.
