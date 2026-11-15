@@ -66,6 +66,12 @@ In Claude Code, say:
 Install this skill: https://github.com/chungkwan24/typography-skills
 ```
 
+Or use the [skills](https://www.npmjs.com/package/skills) command-line tool:
+
+```bash
+npx skills add chungkwan24/typography-skills
+```
+
 Or copy it by hand:
 
 ```bash
@@ -122,3 +128,7 @@ I've finished editing. Check the contents page and the page numbering before I e
 5. **Delivery.** You get the edited file, a change log, and a status report that separates what was applied, what was checked, and what still needs your eye.
 
 **Modes.** *Review* (the default) never changes the document. *Edit* changes only what you authorised. *Pause* stops all changes until you resume. Installing or discussing the skill never starts editing.
+
+## License
+
+[MIT](LICENSE). The demo font Caladea is not included in this repository.
