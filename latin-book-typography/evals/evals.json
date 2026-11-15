@@ -112,6 +112,23 @@
         "Says page-level verification needs a PDF exported by Word itself, and that a LibreOffice or other conversion is not proof",
         "Does not claim widows, runts or rivers were verified from the document XML alone"
       ]
+    },
+    {
+      "id": 6,
+      "name": "font-aware-kerning-and-late-rescue",
+      "prompt": "我在 InDesign 里排一本英文学术书，正文我自己选了 Georgia 10.5/15，标题用 Avenir。章标题的字号和版心宽度还没最后定。现在第 12 页有个段落最后一行只剩一个词，你先帮我把 kerning 调一下，另外告诉我这两个字体 kerning 应该怎么设。字体文件在 /System/Library/Fonts/Supplemental/Georgia.ttf 和 /System/Library/Fonts/Avenir.ttc。",
+      "expected_output": "A Chinese reply. Profiles both fonts with scripts/font_profile.py instead of applying 'serif=Optical, sans=Metrics' from the names alone, and reports the evidence: Georgia is a serif with no pair kerning in the file (so Optical, because Metrics would leave pairs unkerned), Avenir is a sans with rich pair kerning (Metrics). Gives per-font rescue-tracking budgets from the profile. Explains that removing the runt is range tracking in InDesign terms, and that because heading size and text-frame width are not final the layout is not frozen, so a local fix now would likely be undone; offers to wait or to do it now as a provisional fix. Does not edit the document without authorization and does not change locked body values.",
+      "files": [],
+      "assertions": [
+        "Runs or proposes scripts/font_profile.py on both font files rather than deciding from the family names alone",
+        "States that Georgia carries no (or almost no) pair kerning and therefore gets Optical for that reason",
+        "Recommends Metrics for Avenir based on its pair-kerning data",
+        "Gives tracking budgets that differ per font and are small (absolute limit no greater than 20 units)",
+        "Says the runt fix is tracking over whole lines (the user's 'kerning'), not pair kerning",
+        "Points out that heading size and frame width are not final, so the local fix should wait for the layout freeze or be marked provisional",
+        "Does not propose changing font size, leading or horizontal scaling to remove the runt",
+        "Reply to the user is in Chinese"
+      ]
     }
   ]
 }

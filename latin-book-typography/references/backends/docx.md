@@ -7,7 +7,7 @@ Typography rules and modes come from SKILL.md.
 ## What changes from InDesign
 
 - **Composition engine:** Word composes lines and pages differently from InDesign, and pagination can change with fonts, printer drivers or another machine. A layout check is only valid for the fonts and Word version it was made with.
-- **No optical kerning.** Word offers pair kerning above a chosen size. The house default (Optical for serif) cannot be applied; say so and use Metrics-style pair kerning where available.
+- **No optical kerning.** Word offers pair kerning above a chosen size. The house default (Optical for serif) cannot be applied; say so and use Metrics-style pair kerning where available. The font profile's rescue-tracking budgets still apply to character spacing; see [kerning.md](../kerning.md), section 7, for the unit conversion and its 0.05 pt granularity.
 - **Tracking** is character spacing in points (expanded/condensed), not 1/1000 em. Convert deliberately: at 10.5 pt, 1/1000 em ≈ 0.0105 pt, so Word's 0.1 pt steps are coarse.
 - **Widow/orphan control** is a fixed two-line rule per paragraph, plus Keep with next and Keep lines together for headings and short paragraphs.
 - **Text flow:** the body flows natively. Do not move body text into text boxes or frames.
