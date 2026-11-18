@@ -1,8 +1,16 @@
-# Latin Book Typography
+# FullAuto-Typography-Tools
 
-A Claude skill that reviews and refines the typography of Latin-script books (English, French, German, Latin and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
+A set of tools package that connect your Adobe Indesign to your agent, on MacOS and Windows
+A skill reviews and refines the typography of Latin-script books (English, French, German, Latin and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
 
 Skill folder: [`latin-book-typography/`](latin-book-typography/)
+Indesign-Bridge-folder： [`indesign-bridge`](indesign-bridge/)
+
+Comming Soon:
+Windows COM control your Indesign
+Rich-image book layout
+Typefaces recommading and commercial use checking
+
 
 ---
 
