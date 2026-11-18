@@ -1,4 +1,4 @@
-# FullAuto-Typography-Tools
+# Fullauto-Typography-Tools
 
 A set of tools for connecting an agent to Adobe InDesign. The InDesign bridge has been tested on macOS.
 
@@ -10,7 +10,7 @@ Indesign-Bridge-folder： [`indesign-bridge`](indesign-bridge/)
 Planned:\
 Windows COM control for InDesign\
 Rich-image book layout\
-Typeface recommendations and commercial use checking\
+Typeface recommendations and commercial use checking
 
 
 ---
