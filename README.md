@@ -1,15 +1,15 @@
 # FullAuto-Typography-Tools
 
-A set of tools package that connect your Adobe Indesign to your agent, on MacOS and Windows
-A skill reviews and refines the typography of Latin-script books (English, French, German, Latin and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
+A set of tools that connect your Adobe InDesign to your agent on macOS and Windows
+A skill reviews and refines the typography of Latin-script books (English, French, German, Latin, and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
 
-Skill folder: [`latin-book-typography/`](latin-book-typography/)
+Skill folder: [`latin-book-typography/`](latin-book-typography/)\
 Indesign-Bridge-folder： [`indesign-bridge`](indesign-bridge/)
 
-Comming Soon:
-Windows COM control your Indesign
-Rich-image book layout
-Typefaces recommading and commercial use checking
+Comming Soon:\
+Windows COM control for InDesign\
+Rich-image book layout\
+Typeface recommendations and commercial use checking\
 
 
 ---
@@ -68,29 +68,47 @@ Three defects and the kind of fix the skill makes for each:
 
 ### Install
 
-In Claude Code, say:
+Choose one installation method.
 
-```text
-Install this skill: https://github.com/chungkwan24/Fullauto-Typography-Tools
-```
+1. **Ask your agent**
 
-Or use the [skills](https://www.npmjs.com/package/skills) command-line tool:
+   In Claude Code, Codex, or your agent, say:
 
-```bash
-npx skills add chungkwan24/Fullauto-Typography-Tools
-```
+   ```text
+   Install this skill: https://github.com/chungkwan24/Fullauto-Typography-Tools
+   ```
 
-Or copy it by hand:
+2. **Use the `skills` CLI**
 
-```bash
-git clone https://github.com/chungkwan24/Fullauto-Typography-Tools.git
-```
+   Run this command with the [skills](https://www.npmjs.com/package/skills) CLI:
 
-```bash
-cp -r Fullauto-Typography-Tools/latin-book-typography ~/.claude/skills/
-```
+   ```bash
+   npx skills add chungkwan24/Fullauto-Typography-Tools
+   ```
 
-To install it for one project only, copy the folder into that project's `.claude/skills/` directory instead.
+3. **Install manually**
+
+   Clone the repository:
+
+   ```sh
+   git clone https://github.com/chungkwan24/Fullauto-Typography-Tools.git
+   ```
+
+   From the same directory, use the command for your shell. Replace `.claude/skills` with your agent’s skills directory.
+
+   **Bash (macOS or Linux)**
+
+   ```bash
+   cp -r Fullauto-Typography-Tools/latin-book-typography ~/.claude/skills/
+   ```
+
+   **Windows PowerShell**
+
+   ```powershell
+   xcopy "Fullauto-Typography-Tools\latin-book-typography" "$env:USERPROFILE\.claude\skills\latin-book-typography" /E /I
+   ```
+
+   For a project-only install, copy the folder into your agent’s skills directory inside the project.
 
 ### Requirements
 
@@ -101,8 +119,9 @@ To install it for one project only, copy the folder into that project's `.claude
 
 | Route | What you need | Best for |
 | --- | --- | --- |
-| MCP connection (recommended) | macOS, Adobe UXP Developer Tools, and the Python `mcp` package (`mcp==1.30.0`). Windows is not validated yet. | Repeated inspection and tracking edits from the agent. |
-| JSX jobs | macOS with AppleScript, or any system where you can run a script from InDesign's Scripts panel. | Read-only inspection and one-off edits without setting up MCP. |
+| MCP connection (Advanced) | macOS, Adobe UXP Developer Tools, and the Python `mcp` package (`mcp==1.30.0`). Windows is not validated yet. | Repeated inspection and tracking edits from the agent. |
+| JSX jobs (macOS) | macOS with AppleScript, or any system where you can run a script from InDesign's Scripts panel. | Read-only inspection and one-off edits without setting up MCP. |
+| COM (Windows) | comming soon| All Windows user|
 | Manual | Nothing extra. The agent prepares the script, you run it from the Scripts panel and send back the result. | Browser chats and locked-down machines. |
 
 The MCP server and its InDesign plugin are not inside the skill folder. They live in [`indesign-bridge/`](indesign-bridge/README.md) at the top of this repository, so several skills can share one connection. Keep a clone of the repository for them; copying only the skill folder is enough for the JSX and manual routes. The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
