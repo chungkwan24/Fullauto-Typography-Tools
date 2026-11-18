@@ -43,15 +43,15 @@ Three defects and the kind of fix the skill makes for each:
 **Good for**
 
 - Final typesetting of academic books, monographs and theses, and design-led books where appearance comes first. The skill asks which one you are making, because they follow different alignment and page conventions.
-- Removing widows, orphans and runts; checking rivers, hyphenation, justification, kerning and tracking.
+- Removing widows, orphans, and runts; checking rivers, hyphenation, justification, kerning and tracking.
 - Book structure: right-hand (recto) chapter starts, Roman front-matter and Arabic body page numbering, headings kept with their text, and a final check of every contents-page entry against the real page numbers.
 - Cleaning up manuscripts: straight quotes used as quotation marks, stray leading spaces, and paragraph marks left after every line of text pasted from a PDF.
 - Pre-flight checks for a print-ready PDF.
 
 **Not for**
 
-- Editing prose, grammar or style.
-- LaTeX documents.
+- Rewriting or Proofreading 
+- LaTeX documents. (Coming soon)
 - Typesetting Chinese, Japanese, Korean or other non-Latin scripts. Such text can appear in the book; the skill leaves it unchanged and lists it in the report.
 
 **Software**
@@ -60,9 +60,6 @@ Three defects and the kind of fix the skill makes for each:
 | --- | --- |
 | Adobe InDesign (INDD, IDML) | Supported. Inspection and edits through a local MCP connection, ExtendScript (JSX) jobs or a UXP bridge. Qualified on InDesign 2026 (21.2) on macOS. |
 | PDF or screenshots | Review only. Visible layout can be checked; native settings cannot. |
-| Microsoft Word (.docx) | Planned. The rules are mapped but not yet verified in Word. |
-| Apple Pages | Planned. The rules are mapped but not yet verified in Pages. |
-| Google Docs | Not supported. |
 
 ## 4. Installation and requirements
 
@@ -117,12 +114,11 @@ Choose one installation method.
 - **fontTools** for font profiling: `python3 -m pip install fonttools`. Without it the skill falls back to a conservative spacing budget and says that the font was not measured.
 - **Adobe InDesign** with your document open, plus one way for the agent to reach it:
 
-| Route | What you need | Best for |
-| --- | --- | --- |
-| MCP connection (Advanced) | macOS, Adobe UXP Developer Tools, and the Python `mcp` package (`mcp==1.30.0`). Windows is not validated yet. | Repeated inspection and tracking edits from the agent. |
-| JSX jobs (macOS) | macOS with AppleScript, or any system where you can run a script from InDesign's Scripts panel. | Read-only inspection and one-off edits without setting up MCP. |
-| COM (Windows) | comming soon| All Windows user|
-| Manual | Nothing extra. The agent prepares the script, you run it from the Scripts panel and send back the result. | Browser chats and locked-down machines. |
+| Route | What you need | Best for | Downsides |
+| --- | --- | --- | --- |
+| Adobe UXP (Recommended) | A Mac with InDesign, Adobe UXP Developer Tools, and the Python package `mcp==1.30.0`. | Complicated work. Letting the agent check text, adjust letter spacing, and check the result again. | Takes the most setup. You may need help installing Adobe UXP Developer Tools and the Python package. You may need to reload plug-in in UXP manually. This setup has only been tested on Mac. |
+| JSX scripts (Mac) | A Mac with InDesign.  | One-off edits and Read-only inspection without setting up MCP. | It may slow down since agent has to run the script on each pass, read the results, and decide what to do next. This slows things down, and a script failure can interrupt the workflow. |
+| COM (Windows, coming soon) | A Windows PC with InDesign. | Windows users who want the agent to work directly in InDesign. | You’ll need to use the manual route until COM is ready. |
 
 The MCP server and its InDesign plugin are not inside the skill folder. They live in [`indesign-bridge/`](indesign-bridge/README.md) at the top of this repository, so several skills can share one connection. Keep a clone of the repository for them; copying only the skill folder is enough for the JSX and manual routes. The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
 
