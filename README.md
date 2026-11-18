@@ -1,12 +1,13 @@
 # FullAuto-Typography-Tools
 
-A set of tools that connect your Adobe InDesign to your agent on macOS and Windows
+A set of tools for connecting an agent to Adobe InDesign. The InDesign bridge has been tested on macOS.
+
 A skill reviews and refines the typography of Latin-script books (English, French, German, Latin, and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
 
 Skill folder: [`latin-book-typography/`](latin-book-typography/)\
 Indesign-Bridge-folder： [`indesign-bridge`](indesign-bridge/)
 
-Comming Soon:\
+Planned:\
 Windows COM control for InDesign\
 Rich-image book layout\
 Typeface recommendations and commercial use checking\
@@ -20,11 +21,11 @@ Long documents pick up small typographic faults that are easy to miss and tediou
 
 What makes it different from a generic "check my layout" prompt:
 
-- **It does not change what you approved.** Body font, size, leading, indents and paragraph spacing are recorded at the start and treated as locked. Problems are solved with hyphenation, spacing, pagination and other permitted levers, never by quietly shrinking the type.
+- **Approved body-text settings stay locked.** The skill records the body font, size, leading, indents, and paragraph spacing before editing. It uses permitted adjustments such as hyphenation, spacing, and pagination.
 - **It does not rewrite your text.** Wording, spelling, names and numbers stay as they are. Only clearly accidental punctuation, whitespace and line-break faults are repaired, and each repair is logged with its location and before/after value.
 - **Spacing decisions come from your actual font.** A bundled script measures the font file to choose the kerning mode and to set how far tracking may move in each direction. Local fixes stay inside that budget, so a tightly fitted serif is treated more carefully than an open sans.
 - **Review comes first.** Unless you ask for edits, it only inspects and reports, giving the page, the text range, the evidence and the proposed fix for each problem.
-- **It tells you what it could not check.** If a rule cannot be verified (missing fonts, a PDF with no source, a backend that cannot see composition), the report says so instead of claiming a pass.
+- **The report identifies checks that could not be completed.** It gives the reason, such as missing fonts, a PDF without its source document, or a connection that cannot inspect the composed layout.
 
 ## 2. Demo
 
@@ -42,7 +43,7 @@ Three defects and the kind of fix the skill makes for each:
 
 **Good for**
 
-- Final typesetting of academic books, monographs and theses, and design-led books where appearance comes first. The skill asks which one you are making, because they follow different alignment and page conventions.
+- Final typesetting for academic books, monographs, theses, and design-led books. The skill asks which one you are making, because they follow different alignment and page conventions.
 - Removing widows, orphans, and runts; checking rivers, hyphenation, justification, kerning and tracking.
 - Book structure: right-hand (recto) chapter starts, Roman front-matter and Arabic body page numbering, headings kept with their text, and a final check of every contents-page entry against the real page numbers.
 - Cleaning up manuscripts: straight quotes used as quotation marks, stray leading spaces, and paragraph marks left after every line of text pasted from a PDF.
@@ -51,14 +52,14 @@ Three defects and the kind of fix the skill makes for each:
 **Not for**
 
 - Rewriting or Proofreading 
-- LaTeX documents. (Coming soon)
+- LaTeX documents. Support is planned.
 - Typesetting Chinese, Japanese, Korean or other non-Latin scripts. Such text can appear in the book; the skill leaves it unchanged and lists it in the report.
 
 **Software**
 
 | Application | Status |
 | --- | --- |
-| Adobe InDesign (INDD, IDML) | Supported. Inspection and edits through a local MCP connection, ExtendScript (JSX) jobs or a UXP bridge. Qualified on InDesign 2026 (21.2) on macOS. |
+| Adobe InDesign (INDD, IDML) | Supported. Inspection and edits through a local MCP connection, ExtendScript (JSX) jobs or a UXP bridge. Tested with InDesign 2026 (21.2) on macOS. |
 | PDF or screenshots | Review only. Visible layout can be checked; native settings cannot. |
 
 ## 4. Installation and requirements
@@ -114,11 +115,11 @@ Choose one installation method.
 - **fontTools** for font profiling: `python3 -m pip install fonttools`. Without it the skill falls back to a conservative spacing budget and says that the font was not measured.
 - **Adobe InDesign** with your document open, plus one way for the agent to reach it:
 
-| Route | What you need | Best for | Downsides |
+| Route | What you need | Typical use | Setup and limitations |
 | --- | --- | --- | --- |
-| Adobe UXP (Recommended) | A Mac with InDesign, Adobe UXP Developer Tools, and the Python package `mcp==1.30.0`. | Complicated work. Letting the agent check text, adjust letter spacing, and check the result again. | Takes the most setup. You may need help installing Adobe UXP Developer Tools and the Python package. You may need to reload plug-in in UXP manually. This setup has only been tested on Mac. |
-| JSX scripts (Mac) | A Mac with InDesign.  | One-off edits and Read-only inspection without setting up MCP. | It may slow down since agent has to run the script on each pass, read the results, and decide what to do next. This slows things down, and a script failure can interrupt the workflow. |
-| COM (Windows, coming soon) | A Windows PC with InDesign. | Windows users who want the agent to work directly in InDesign. | You’ll need to use the manual route until COM is ready. |
+| Adobe UXP (MCP) | A Mac with InDesign, Adobe UXP Developer Tools, and the Python package `mcp==1.30.0`. | Repeated layout inspection and tracking adjustments. | Requires a one-time connection setup. You may need to reload the plug-in in UXP Developer Tools. Tested on macOS. |
+| JSX scripts (macOS) | A Mac with InDesign. | One-off edits and read-only inspection without setting up MCP. | Each inspection pass requires a separate script run. |
+| COM (Windows, planned) | A Windows PC with InDesign. | Direct interaction with InDesign from the agent on Windows. | The manual workflow is available in the meantime. |
 
 The MCP server and its InDesign plugin are not inside the skill folder. They live in [`indesign-bridge/`](indesign-bridge/README.md) at the top of this repository, so several skills can share one connection. Keep a clone of the repository for them; copying only the skill folder is enough for the JSX and manual routes. The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
 
@@ -148,7 +149,7 @@ I've finished editing. Check the contents page and the page numbering before I e
 2. **Baseline.** It records the approved body specifications and leaves them alone from then on.
 3. **Audit.** It inspects the composed pages and lists each problem with its page, text range, evidence and proposed fix.
 4. **Edit (only if you ask).** Text repairs come first, then spacing. Local spacing fixes are made last, once the wording, headings, frames and page count are settled, because each of those changes reflows the lines a fix was tuned for.
-5. **Delivery.** You get the edited file, a change log, and a status report that separates what was applied, what was checked, and what still needs your eye.
+5. **Delivery.** In Review mode, you receive a findings report. In Edit mode, you receive the edited document, a change log, and a status report covering applied changes, completed checks, and items for your review.
 
 **Modes.** *Review* (the default) never changes the document. *Edit* changes only what you authorised. *Pause* stops all changes until you resume. Installing or discussing the skill never starts editing.
 
