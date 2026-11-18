@@ -71,23 +71,23 @@ Three defects and the kind of fix the skill makes for each:
 In Claude Code, say:
 
 ```text
-Install this skill: https://github.com/chungkwan24/typography-skills
+Install this skill: https://github.com/chungkwan24/Fullauto-Typography-Tools
 ```
 
 Or use the [skills](https://www.npmjs.com/package/skills) command-line tool:
 
 ```bash
-npx skills add chungkwan24/typography-skills
+npx skills add chungkwan24/Fullauto-Typography-Tools
 ```
 
 Or copy it by hand:
 
 ```bash
-git clone https://github.com/chungkwan24/typography-skills.git
+git clone https://github.com/chungkwan24/Fullauto-Typography-Tools.git
 ```
 
 ```bash
-cp -r typography-skills/latin-book-typography ~/.claude/skills/
+cp -r Fullauto-Typography-Tools/latin-book-typography ~/.claude/skills/
 ```
 
 To install it for one project only, copy the folder into that project's `.claude/skills/` directory instead.
