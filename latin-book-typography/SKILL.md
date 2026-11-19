@@ -140,6 +140,16 @@ The user selects the family. Help install or activate it through Adobe or the op
 
 After an authorized font change, profile the actual faces, recompose and recheck the affected text using the existing typography workflow. Resolve overset with permitted layout adjustments rather than silently shrinking locked type.
 
+### Nonprinting instructions during parent-page creation
+
+During authorized InDesign parent-page creation, mark each template-only instruction text frame **Nonprinting** (`nonprinting = true`) as it is created, or immediately after finishing that parent page. Complete this step before declaring the parent ready or distributing it throughout the book; do not defer it to final export cleanup. This applies in either purpose branch when such instructions are present.
+
+Examples include image-slot numbers, aspect-ratio labels and replacement instructions. Keep the explanation visible while editing. Apply the attribute to the instruction text frame itself, preserving its contents, geometry, styles and the layer's visibility and print settings. Actual images, body text, captions, chapter headings and verse numbers remain printable.
+
+For imported or reused parents, inspect these attributes before reuse and correct them within the authorized scope. Check child-page inheritance and any overridden copies; identify remaining printable instructions rather than assuming that a parent change reached every copy.
+
+Before handing off the template, verify a representative child-page PDF: the instruction must be absent while the intended artwork remains. Normal export must exclude nonprinting objects, and printing must not enable Print Non-printing Objects. Report any output setting that overrides the exclusion.
+
 ## 3. Choose the backend
 
 Pick the backend from the file the user provides, read its reference, and use only that route for the operation. The table describes backend capabilities; the selected purpose branch determines which conventions to apply.
@@ -284,6 +294,10 @@ Both text-only and illustrated books are valid. Do not introduce images merely b
 For illustrated work, ask whether the user has references or wants layout recommendations, if that has not already been answered. Establish the visual direction before distributing layouts throughout the book.
 
 Choose compositions according to chapter length, reading order, opening side, text density and image needs. Do not distribute parent pages mechanically.
+
+#### Parent-page preparation
+
+Complete the [nonprinting instruction-frame setup](#nonprinting-instructions-during-parent-page-creation) during parent construction or immediately afterwards, before applying the parent across the book.
 
 #### Parent-page variety
 
