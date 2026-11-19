@@ -1,6 +1,7 @@
 # Fullauto-Typography-Tools
 
-A set of tools for connecting an agent to Adobe InDesign, with macOS routes and a Windows COM route. See each route's documented validation scope.
+A set of tools for connecting an agent to Adobe InDesign, with macOS routes and a Windows COM route. See each route's documented validation scope.\
+Adobe UXP Developer Tools connecting route included in InDesign-Bridge; recommended.
 
 A skill reviews and refines the typography of Latin-script books (English, French, German, Latin, and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
 
