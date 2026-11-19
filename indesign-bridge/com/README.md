@@ -27,6 +27,8 @@ If `py` is unavailable, use the full path to an installed Python executable. A W
 
 This reads both registry views and lists COM registrations and running InDesign processes. It does not activate COM or modify documents.
 
+An empty process list means **no process is visible to this execution context**, not proof that InDesign is closed. Agent sandboxes, different desktop sessions and process permissions can hide an application that is open. Verify access in the authorized desktop context before drawing that conclusion or starting another instance. Do not disable security controls or change Adobe registrations to bypass the boundary.
+
 The connection selects a version-specific ProgID whose registered executable matches the running process. It never selects the unversioned `InDesign.Application` alias. Registry command-line arguments and quoted executable paths are handled separately.
 
 If distinct versions are running, use `--pid` to select the intended process. Two processes using the same installed executable remain ambiguous even with `--pid`; COM registration alone cannot identify which one to use.
@@ -98,6 +100,15 @@ The unit suite uses fake COM objects and does not launch or edit InDesign:
 
 If Node is available, three additional wrapper tests evaluate the generated JavaScript with a fake application to check identity guards, JSON serialization and preference restoration. They are skipped when Node is unavailable; this remains an emulation, not a native InDesign test.
 
-Package verification on 2026-11-19 identified the installed Windows registrations and confirmed that no InDesign process was running. The live probe correctly refused activation. No book was opened or modified; a successful live application probe for this packaged revision remains to be run with InDesign open.
+Native verification on 2026-11-19 used Windows with InDesign 2027, version **22.0.0.104**, and an already-open, user-authorized test INDD:
+
+- Initial sandbox-limited discovery could not see the application. Discovery with authorized desktop access found its running version without launching another instance.
+- The read-only probe attached through the version-specific local COM server, resolved the JavaScript enum from the installed type library, and passed before/after document metadata checks.
+- A deliberately incorrect document name was rejected before payload dispatch.
+- Authorized payloads read document structure and text, created a temporary text frame and paragraph style, changed tracking and frame bounds, and removed the temporary objects.
+- Full text and the captured document geometry, parent assignments, item geometry and style snapshots matched before/after cleanup by SHA-256. The test document retained a modified flag; it was not saved or closed. The other open document was not edited.
+- Native Undo was **not qualified**: the test did not expose the expected undo label through the script route, so the guard refused Undo. Cleanup used the verified temporary object identities instead. This is not a general rollback guarantee.
+
+The complete local test records include preflight failures caused by the experimental test payload's nested-script argument handling; inspections confirmed no document changes before correcting that payload. For nested `app.doScript(function, ..., arguments, ...)` in this tested version, the function receives the supplied arguments array as its first parameter. This differs from the executor's direct `run(doc, job, helpers)` payload call.
 
 Run `discover` and `probe` on each actual installation. Unit tests do not replace a live application probe. A guarded mutation must also be verified on an authorized disposable document before being treated as qualified for a particular operation.

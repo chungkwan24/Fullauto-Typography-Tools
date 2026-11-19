@@ -45,6 +45,8 @@ class Target:
 
 def select_target(registrations: list[dict], processes: list[dict], pid: int | None = None) -> Target:
     candidates = [p for p in processes if pid is None or int(p["pid"]) == pid]
+    if not candidates:
+        raise BridgeError("No matching InDesign process is visible in this execution context; check sandbox, desktop session and process permissions before concluding InDesign is closed")
     if len(candidates) != 1:
         raise BridgeError("Need one identifiable running InDesign process; use --pid for distinct installed versions")
     process = candidates[0]
@@ -256,7 +258,13 @@ def main(argv=None) -> int:
             raise BridgeError("Output already exists; choose a new report path")
         if args.command == "discover":
             runtime = WindowsRuntime()
-            report = {"registrations": runtime.registrations(), "processes": runtime.processes(), "read_only": True}
+            processes = runtime.processes()
+            report = {"registrations": runtime.registrations(), "processes": processes, "read_only": True,
+                      "process_visibility": "processes_observed" if processes else "no_processes_visible"}
+            if not processes:
+                report["warning"] = ("An empty process list does not prove InDesign is closed. "
+                                     "A sandbox, desktop session or permission boundary can hide it. "
+                                     "Verify authorized desktop access before launching another instance.")
         else:
             with connection(args.pid) as session:
                 report = probe(session)

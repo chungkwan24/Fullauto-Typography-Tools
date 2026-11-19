@@ -122,6 +122,26 @@ class SelectionTests(unittest.TestCase):
 
 
 class ProbeTests(unittest.TestCase):
+    def test_empty_discovery_reports_visibility_limit_without_activation(self):
+        runtime = FakeRuntime()
+        runtime.process_list = []
+        with patch.object(bridge, "WindowsRuntime", return_value=runtime), patch.object(bridge, "write_report") as writer:
+            self.assertEqual(bridge.main(["discover"]), 0)
+        report = writer.call_args.args[0]
+        self.assertEqual(report["processes"], [])
+        self.assertEqual(report["process_visibility"], "no_processes_visible")
+        self.assertTrue(report.get("warning"))
+        self.assertEqual(runtime.attaches, 0)
+
+    def test_visible_discovery_does_not_activate_com(self):
+        runtime = FakeRuntime()
+        with patch.object(bridge, "WindowsRuntime", return_value=runtime), patch.object(bridge, "write_report") as writer:
+            self.assertEqual(bridge.main(["discover"]), 0)
+        report = writer.call_args.args[0]
+        self.assertEqual(report["process_visibility"], "processes_observed")
+        self.assertNotIn("warning", report)
+        self.assertEqual(runtime.attaches, 0)
+
     def test_probe_preserves_metadata_and_uses_resolved_language(self):
         runtime = FakeRuntime()
         runtime.app.outcome = "COM_READ_ONLY_OK|test-version|1"
