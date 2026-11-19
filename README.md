@@ -1,6 +1,6 @@
 # Fullauto-Typography-Tools
 
-A set of tools for connecting an agent to Adobe InDesign. The InDesign bridge has been tested on macOS.
+A set of tools for connecting an agent to Adobe InDesign, with macOS routes and a Windows COM route. See each route's documented validation scope.
 
 A skill reviews and refines the typography of Latin-script books (English, French, German, Latin, and other languages written in the Latin alphabet) the way a careful typesetter would. It works on the real document, follows your house rules, and logs every change it makes.
 
@@ -8,7 +8,6 @@ Skill folder: [`latin-book-typography/`](latin-book-typography/)\
 Indesign-Bridge-folder： [`indesign-bridge`](indesign-bridge/)
 
 Planned:\
-Windows COM control for InDesign\
 Rich-image book layout\
 Typeface recommendations and commercial use checking
 
@@ -59,7 +58,7 @@ Three defects and the kind of fix the skill makes for each:
 
 | Application | Status |
 | --- | --- |
-| Adobe InDesign (INDD, IDML) | Supported. Inspection and edits through a local MCP connection, ExtendScript (JSX) jobs or a UXP bridge. Tested with InDesign 2026 (21.2) on macOS. |
+| Adobe InDesign (INDD, IDML) | Inspection and edits through a local MCP connection, ExtendScript (JSX) jobs, a UXP bridge or Windows COM. macOS testing used InDesign 2026 (21.2); see the [Windows COM guide](indesign-bridge/com/README.md) for its validation scope. |
 | PDF or screenshots | Review only. Visible layout can be checked; native settings cannot. |
 
 ## 4. Installation and requirements
@@ -119,7 +118,7 @@ Choose one installation method.
 | --- | --- | --- | --- |
 | Adobe UXP (MCP) | A Mac with InDesign, Adobe UXP Developer Tools, and the Python package `mcp==1.30.0`. | Repeated layout inspection and tracking adjustments. | Requires a one-time connection setup. You may need to reload the plug-in in UXP Developer Tools. Tested on macOS. |
 | JSX scripts (macOS) | A Mac with InDesign. | One-off edits and read-only inspection without setting up MCP. | Each inspection pass requires a separate script run. |
-| COM (Windows, planned) | A Windows PC with InDesign. | Direct interaction with InDesign from the agent on Windows. | The manual workflow is available in the meantime. |
+| COM (Windows) | Windows, an already-running InDesign, Python 3.10+ and pywin32. | Read-only discovery/probing and authorized, document-guarded JSX execution. | No UXP plugin or UXP Developer Tool required. Resolve the running version and probe it before editing; see [setup and limits](indesign-bridge/com/README.md). |
 
 The MCP server and its InDesign plugin are not inside the skill folder. They live in [`indesign-bridge/`](indesign-bridge/README.md) at the top of this repository, so several skills can share one connection. Keep a clone of the repository for them; copying only the skill folder is enough for the JSX and manual routes. The MCP route needs a one-time pairing between the agent and InDesign. Ask the agent to "set up the InDesign MCP connection" and it will walk you through it; the full steps are in [`references/indesign-mcp.md`](latin-book-typography/references/indesign-mcp.md).
 
