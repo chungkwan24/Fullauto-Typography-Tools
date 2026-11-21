@@ -100,7 +100,7 @@ Choose one installation method.
    cp -r Fullauto-Typography-Tools ~/.agents/skills/
    ```
 
-   **Windows PowerShell**
+   **PowerShell (Windows)**
 
    ```powershell
    xcopy "Fullauto-Typography-Tools" "$env:USERPROFILE\.agents\skills\Fullauto-Typography-Tools" /E /I
