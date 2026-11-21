@@ -73,7 +73,7 @@ Choose one installation method.
    In Claude Code, Codex, or your agent, say:
 
    ```text
-   Install this skill: https://github.com/chungkwan24/Fullauto-Typography-Tools
+   Install this package: https://github.com/chungkwan24/Fullauto-Typography-Tools
    ```
 
 2. **Use the `skills` CLI**
@@ -92,18 +92,18 @@ Choose one installation method.
    git clone https://github.com/chungkwan24/Fullauto-Typography-Tools.git
    ```
 
-   From the same directory, use the command for your shell. Replace `.claude/skills` with your agent’s skills directory.
+   From the same directory, use the command for your shell. Replace `.agents/skills` with your agent’s skills directory.
 
    **Bash (macOS or Linux)**
 
    ```bash
-   cp -r Fullauto-Typography-Tools/latin-book-typography ~/.claude/skills/
+   cp -r Fullauto-Typography-Tools ~/.agents/skills/
    ```
 
    **Windows PowerShell**
 
    ```powershell
-   xcopy "Fullauto-Typography-Tools\latin-book-typography" "$env:USERPROFILE\.claude\skills\latin-book-typography" /E /I
+   xcopy "Fullauto-Typography-Tools" "$env:USERPROFILE\.agents\skills\Fullauto-Typography-Tools" /E /I
    ```
 
    For a project-only install, copy the folder into your agent’s skills directory inside the project.
