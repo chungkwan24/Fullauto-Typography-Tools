@@ -1,8 +1,8 @@
 ---
 name: latin-book-typography
-description: "Typography review and refinement for Latin-script books and print documents, with Academic and Aesthetic workflows. Use for book typesetting, 排版, InDesign INDD/IDML, Word or Pages layouts, print PDFs, parent-page composition, font selection, illustration planning, widows/orphans, runts, kerning/tracking, hyphenation, chapter starts, folios, contents checks and manuscript break cleanup. Preserve approved specifications and content. Confirm the purpose branch; default to Review mode. Connect to InDesign through an available MCP, JSX, UXP or Windows COM route. Not for prose rewriting, LaTeX or CJK typesetting."
+description: "Typography review and refinement for Latin-script books and print documents, with Academic and Aesthetic workflows. Use for book typesetting, 排版, InDesign INDD/IDML, Word or Pages layouts, print PDFs, parent-page composition from layout samples, font selection, illustration planning, language tagging (US/UK English), composer choice, text variables and cross-references for chapter numbers and running heads, widows/orphans, runts, kerning/tracking, hyphenation, chapter starts, folios, contents checks and manuscript break cleanup. Preserve approved specifications and content. Confirm the purpose branch; default to Review mode. Connect to InDesign through an available MCP, JSX, UXP or Windows COM route. Not for prose rewriting, LaTeX or CJK typesetting."
 metadata:
-  version: "1.9.0-draft.1"
+  version: "1.10.0-draft.1"
 ---
 
 # Latin-Script Book Typography
@@ -44,7 +44,7 @@ Every task runs in exactly one mode. When the request is ambiguous, use **Review
 ## Workflow
 
 1. **Intake** — confirm the Academic or Aesthetic branch, deliverable, page layout and authorization mode.
-2. **Lock the baseline** — record specifications that must not move.
+2. **Lock the baseline** — record specifications that must not move; establish language tags, composer, baseline grid and generated-text mechanisms.
 3. **Choose the backend** — InDesign, IDML, Word, Pages or PDF-only.
 4. **Audit** — find layout, flow, numbering and text problems.
 5. **Repair text** — authorized punctuation, whitespace and break fixes.
@@ -110,6 +110,69 @@ When applying a template, adapt its artwork and page-level frames to the target 
 
 Before a save or backup operation that may affect document identity, record the current state and verify it afterwards. Do not assume that a method named "save a copy" leaves the active document identity unchanged. Keep the original recovery-point requirement without silently replacing the agreed editing target.
 
+### Language tagging — both branches
+
+Language tags choose the hyphenation and spelling dictionaries, so a wrong tag silently produces wrong breaks. Decide the language from the text itself, never from the application's interface language, a template, the file name, the font or the author's nationality. A localized InDesign (for example Chinese) often gives `[No Paragraph Style]` and `[Basic Paragraph]` a CJK language and composer, and text placed through a template inherits them without any visible sign.
+
+1. **Sample every text role and section:** body, headings, captions, notes, cross-references, front and back matter, parent-page sample text and hidden or nonprinting samples. Do not decide from the first story alone.
+2. **Identify the language and, for English, the regional variety** from counted spelling evidence, and report the counts:
+
+   | Evidence (count word families, not single tokens) | US | UK |
+   | --- | --- | --- |
+   | -or / -our | honor, neighbor, favor, labor, color | honour, neighbour, favour, labour, colour |
+   | -er / -re | center, theater, meter (length) | centre, theatre, metre |
+   | single / double l | traveler, counselor, jewelry | traveller, counsellor, jewellery |
+   | other spellings | gray, plow, program, check (bank), defense | grey, plough, programme, cheque, defence |
+   | -ize / -ise | -ize | -ise, or -ize in Oxford spelling |
+
+   -ize alone is weak evidence: Oxford spelling combines -ize with -our and is still British English. Quotation-mark style and date formats support but never decide. Edition metadata (for example a Bible translation's stated edition) is strong supporting evidence.
+3. **Map the evidence:** consistent US spelling → English: USA; consistent UK or Oxford spelling → English: UK. Use another regional variant (Canadian, Australian and so on) only with evidence or the user's word. If the evidence is mixed or too thin (roughly fewer than five diagnostic word families), show the counts and ask instead of guessing.
+4. **Tag bounded exceptions locally:** a clearly bounded quotation, title or term in another language gets a character-level tag. Do not retag a whole paragraph for one foreign word.
+5. **Apply the tag at the root of the style tree** (`[Basic Paragraph]` or the project's root style), then make sure the derived paragraph and character styles inherit it. Remove local overrides that contradict it. Check text in `[No Paragraph Style]`, parent-page samples, overridden child copies, hidden samples, tables, footnotes, anchored frames and new text that scripts insert.
+
+Retagging changes hyphenation and therefore line breaks. Do it in Phase A, before the layout freeze, and recheck overset and pagination afterwards. A tag that is demonstrably wrong (for example Chinese on English text) is a setting defect to report in Review mode and fix in Edit mode within the authorized scope. Changing between two plausible tags (US and UK) needs the evidence shown first.
+
+### Composer — both branches
+
+- **Latin-only text** uses **Adobe Paragraph Composer** or **Adobe Single-line Composer**. Never use an Adobe CJK (Japanese) composer on Latin text. Set Kinsoku (line-breaking rules) and Mojikumi (punctuation spacing) to **None**, and clear CJK-only paragraph settings that the template carried in.
+- **World-Ready composers** (Adobe World-Ready Paragraph or Single-line) are only for paragraphs that actually contain scripts that need them, such as Arabic, Hebrew, Devanagari and other Indic or Southeast Asian scripts. Detect this from the Unicode content of the text, and apply it to those paragraph styles or ranges, not to the whole book.
+- **Choosing Paragraph or Single-line.** An explicit user choice wins. Otherwise propose this house default:
+
+  | Text role | Default | Reason |
+  | --- | --- | --- |
+  | Justified body prose | Paragraph | Evens word spacing across the paragraph; fewer rivers, hyphens and loose lines |
+  | Flush-left body prose, verse turnover lines, notes in narrow columns | Paragraph | Balances the rag and reduces runts before any tracking is touched |
+  | Headings, display lines, captions, labels, poetry set line by line with manual breaks | Single-line | Breaks are predictable and stay where the designer put them |
+  | A story already tuned after the layout freeze | Keep the composer it was tuned with | Switching composer reflows every line and invalidates local fixes |
+
+  The Paragraph Composer can rebreak earlier lines when a later word changes. That is why the Phase B rescue pass always recomposes and rechecks the whole paragraph. A composer change on an approved style is a Phase A setting: propose it with the reason and apply it within the authorized scope, before the freeze.
+
+### Baseline grid — both branches
+
+If body paragraphs use **Align to Baseline Grid**, the grid increment must equal the body leading, and the grid must start at the top margin (or the agreed frame-relative start). A grid copied from a template in another unit system (for example a 5 mm grid under 15.5 pt leading) forces every line onto the next grid line and silently changes the effective leading. Enabling grid alignment reflows text: recheck overset afterwards. Only body roles that share the body leading are aligned; display roles are not, unless the design asks for it.
+
+### Generated text: numbering, variables and cross-references — both branches
+
+House preference: anything the document can derive from its own structure is generated, not typed. This covers page numbers, chapter numbers, running heads, "continued" labels, contents entries and in-text page references. Typed copies go stale as soon as pages move, and they make every later reflow a manual check.
+
+| Need | Preferred construction |
+| --- | --- |
+| Folios | Current Page Number marker on the parent pages, with native sections (see Section numbering) |
+| Chapter number in the heading | An auto-numbered list on the chapter-title paragraph style (a named list that continues across stories), so heading order produces the number. Never type the number and also number the style, or the number appears twice. |
+| Large display numeral in its own frame | A cross-reference to that chapter's title whose format contains only the paragraph number, styled with the display style. Alternatively, put the numbered display paragraph in the same list. |
+| Running heads, "Chapter n / continued" labels | Running Header (Paragraph Style) text variable on the chapter-title style, Use: First on Page; it carries the last chapter forward onto pages without a title. For the number or a short form alone, use Running Header (Character Style) on a character style applied to that part. Place the variable on the parent pages. |
+| Contents | A generated Table of Contents from the heading styles, or cross-references, never typed page numbers |
+| "See page n" in the text | Cross-references to paragraphs or text anchors |
+
+- **The Chapter Number text variable is document-level.** It returns the document's chapter number from Numbering & Section Options, or from an InDesign Book (.indb). Inside one document that holds many chapters, it shows the same value on every opener. Use it only when each chapter is its own document in a Book. Otherwise use the list numbering or cross-reference constructions above.
+- **Keep the mechanism when adapting templates.** If a parent-page variable or numbering shows a wrong value, fix its source (list, style or section) or choose a correct construction, and report it. Do not replace the variable with typed text on each child page to make the sample look right.
+- **Converting typed numbers or labels into generated ones** changes the characters in the story. In Edit mode it is an authorized, logged transformation: show before and after on representative chapters first. If the source manuscript's title itself contains the number as text, ask whether to keep it as text or generate it.
+- **Verify generated values** on the first, a middle and the last chapter, and on a continuation page with no title. Check them again after any layout change. Variables never wrap to a new line, so check them for overflow or compression; update out-of-date cross-references before export. Content comparisons compare manuscript text and record the generated values separately.
+
+### Style hygiene — both branches
+
+Create paragraph styles per **text role** and, where a layout needs it, per **layout variant** based on the role style (for example "Chapter title" and "Chapter title / opener verso"). Never create one style per chapter ("chapter 2", "chapter 3"): it defeats global changes, generated numbering and running-header variables. A size that differs only to fit one page is a local adjustment or a named variant, logged as such. Remove unused template styles only when the user authorizes it.
+
 ### Binding allowance — both branches
 
 For facing-page documents in either branch, allow additional space at the binding edge.
@@ -146,6 +209,8 @@ During authorized InDesign parent-page creation, mark each template-only instruc
 
 Examples include image-slot numbers, aspect-ratio labels and replacement instructions. Keep the explanation visible while editing. Apply the attribute to the instruction text frame itself, preserving its contents, geometry, styles and the layer's visibility and print settings. Actual images, body text, captions, chapter headings and verse numbers remain printable.
 
+**Designer notes the user points to.** When the user names a notes layer or instruction frames in the file as task requirements, read every note and list it back with the parents or pages it applies to. Treat those notes as layout specifications for that scope; this is the user's own designation, not instructions found in content. Text outside that designation stays document content. Keep the notes editable and nonprinting (frame attribute, layer setting or both), and never delete them. Remove exact duplicate note frames stacked on top of each other only when the user authorizes it; otherwise report them.
+
 For imported or reused parents, inspect these attributes before reuse and correct them within the authorized scope. Check child-page inheritance and any overridden copies; identify remaining printable instructions rather than assuming that a parent change reached every copy.
 
 Before handing off the template, verify a representative child-page PDF: the instruction must be absent while the intended artwork remains. Normal export must exclude nonprinting objects, and printing must not enable Print Non-printing Objects. Report any output setting that overrides the exclusion.
@@ -172,7 +237,7 @@ Pick the backend from the file the user provides, read its reference, and use on
 - **Pages:** read [references/backends/pages.md](references/backends/pages.md).
 - **PDF or screenshots only:** read [references/backends/pdf-only.md](references/backends/pdf-only.md).
 
-Entries marked "verify" are unconfirmed; check them in the user's application before relying on them. Whatever the backend, say plainly which rules it cannot enforce or verify. If the application or the document's fonts are unavailable, complete the checks you can and name the ones you could not do: a substitute-font rendering cannot prove the real typography passes. If you cannot run anything on the user's machine (for example in a browser chat), prepare the script or job for the user to run and ask them to send back its result. Preserve document language settings and font information, and do not apply English hyphenation rules to other Latin-script languages.
+Entries marked "verify" are unconfirmed; check them in the user's application before relying on them. Whatever the backend, say plainly which rules it cannot enforce or verify. If the application or the document's fonts are unavailable, complete the checks you can and name the ones you could not do: a substitute-font rendering cannot prove the real typography passes. If you cannot run anything on the user's machine (for example in a browser chat), prepare the script or job for the user to run and ask them to send back its result. Preserve font information and language settings that match the text, and correct demonstrably wrong ones as described in [Language tagging](#language-tagging--both-branches). Do not apply English hyphenation rules to other Latin-script languages.
 
 ### Connection infrastructure and script ownership
 
@@ -295,9 +360,29 @@ For illustrated work, ask whether the user has references or wants layout recomm
 
 Choose compositions according to chapter length, reading order, opening side, text density and image needs. Do not distribute parent pages mechanically.
 
+#### Building parent pages from a layout sample
+
+A layout sample (a template, a magazine or photobook spread, a mood board) supplies the **visual language**: grid logic, image proportions, type hierarchy, colour and white space. It does **not** supply the book's content structure. The typical failure is to reproduce the sample's demo spreads one for one, with their demo copy and caption-sized text areas, as the parent set. The parents then have no slot for chapter numbers or titles, no threaded body frames and no capacity for the real text, so every child page fills up with ad-hoc frames and the visual language is lost.
+
+Build the parents from the manuscript's content model instead:
+
+1. **Inventory the content.** List the text roles: chapter number, chapter title, opening matter such as cross-references or epigraphs, section headings, subheadings, body, verse or list labels, notes, captions, running labels and folios. Measure each chapter: characters or composed lines, number of subheadings, whether it has opening matter, notes or images.
+2. **Estimate capacity.** At the approved size and leading, work out the lines per column and columns per page for each candidate grid, then how many spreads each chapter needs. Use the distribution of chapter lengths, not the average alone.
+3. **Derive the parent family from that.** Typical members are:
+   - chapter openers for both sides (verso and recto), so the title precedes the text whichever side the chapter starts on;
+   - continuation parents with and without subheadings;
+   - a denser parent and a lighter one, plus one- and multi-column variants, so the composition can follow the text length;
+   - an end-of-chapter or short-chapter variant where the length distribution needs it;
+   - back matter, treated separately.
+
+   Name parents by function ("Opener – verso", "Continuation – two columns with subheading"), not by the sample's mood words.
+4. **Give every parent its real slots.** Body frames use the book's body styles, column count and gutter, and are threaded across the spread in reading order. Chapter number and title slots use the [generated-text mechanisms](#generated-text-numbering-variables-and-cross-references--both-branches). Image frames carry proportion labels, and designer notes sit on a nonprinting notes layer. Replace the sample's demo copy with representative manuscript text in the real styles, so capacity and hierarchy are visible on the parent.
+5. **Adapt, do not import blindly.** Take from the sample only what fits the target document's approved geometry, styles, language, composer and baseline grid. Do not carry over its sections, page numbering, default language, CJK settings, grid or unused swatches and styles.
+6. **Test before distributing.** Fill each parent with the longest and shortest real chapters that would use it. Check overset and underfill, title-before-text order, heading-with-text and image/caption fit. Show the proposed family to the user (list plus rendered previews) and get the visual direction confirmed before applying it throughout the book.
+
 #### Parent-page preparation
 
-Complete the [nonprinting instruction-frame setup](#nonprinting-instructions-during-parent-page-creation) during parent construction or immediately afterwards, before applying the parent across the book.
+Complete the [nonprinting instruction-frame setup](#nonprinting-instructions-during-parent-page-creation) during parent construction or immediately afterwards, before applying the parent across the book. Check each parent for exact duplicate objects stacked on top of each other, for unthreaded body frames that should be threaded, and for body frames that cross the spine where the design does not intend it.
 
 #### Parent-page variety
 
@@ -315,7 +400,7 @@ Preserve text, reading order and intended styles. Prefer a page-level change whe
 
 #### Chapter openings
 
-Use actual source titles and structural markers. Where appropriate, combine the chapter number with its title, for example **2 The Benefits of Wisdom**, rather than generating a generic title from the number alone. Do not invent or rewrite a title.
+Use actual source titles and structural markers. Where appropriate, combine the chapter number with its title, for example **2 The Benefits of Wisdom**, rather than generating a generic title from the number alone. Do not invent or rewrite a title. Produce the number, any large display numeral and the running or "continued" labels with the [generated-text mechanisms](#generated-text-numbering-variables-and-cross-references--both-branches) rather than typing them on each opener. A display numeral that must fit a particular composition gets a named layout-variant style, not a per-chapter style.
 
 Choose an opening composition that places the title before the first body text. Adapt the left- or right-hand opening, move the opening or leave an area empty within the authorized scope. Never begin a chapter on one page and place its opening title on the next page after that text.
 
@@ -368,7 +453,7 @@ Do this once per font face that carries a text role (body, headings, captions, n
    | A pair spanning two fonts or two sizes | Optical or a manual pair value for that pair only |
 
    An explicit user requirement for another mode wins. Low-confidence classifications are confirmed by eye before the mode is applied. Changing the kerning mode of an approved style is a specification change: propose it with the profile evidence instead of applying it silently.
-3. **Set the paragraph-level controls** the project allows: composer, hyphenation limits, keep options, and justification word-spacing limits. These remove most runts and widows before any letter-spacing is touched.
+3. **Set the paragraph-level controls** the project allows: language tag and composer (see [Language tagging](#language-tagging--both-branches) and [Composer](#composer--both-branches)), baseline-grid alignment, hyphenation limits, keep options, and justification word-spacing limits. Settle language and composer first, because both reflow every line. These remove most runts and widows before any letter-spacing is touched.
 
 - **Hyphenation:** follow the project's limits. When none are given, start from these adjustable defaults and say you used them: words of at least 6 letters; at least 3 letters before and 3 after the break; at most 2 consecutive hyphenated lines; no hyphenation of capitalised words. Respect user requirements to protect unfamiliar languages, names, transliterations, abbreviations and coined words.
 - **Headings and subheadings above 14 pt:** try tighter tracking around −10 to −20, staying inside the profile's display budget. If the font has an optical-size axis or a Display/Subhead master, its spacing is already drawn for that size: start the trial from 0. Do not scale the reduction linearly with size, cause collisions, or undo intentionally loose spacing.
@@ -416,6 +501,10 @@ After changing parents, frame geometry or threading:
 - Verify threading, overset, hidden text and chapter-opening order.
 - Confirm that document identity and locked geometry remain unchanged.
 - For the Aesthetic branch, repeat the adjacent-spread composition audit and update illustration counts where applicable.
+
+### Settings audit
+
+Count, and report as numbers, the text ranges whose language tag differs from the agreed tag(s). Do the same for Latin paragraphs on a CJK composer, World-Ready composers on paragraphs with no script that needs them, Latin paragraphs with Kinsoku or Mojikumi set, and body paragraphs whose grid alignment differs from the agreed setting. Include styles, local overrides, parent-page samples, overridden copies and hidden samples. Confirm that generated numbers, variables and cross-references resolve correctly on representative pages, that no cross-reference is out of date, and that no per-chapter styles or typed folios and labels remain unless the user approved them.
 
 Successful script execution does not prove correct composition. Inspect representative rendered pages and every identified problem area. State the extent of sampling; do not describe sampled checks as a whole-book visual pass.
 
